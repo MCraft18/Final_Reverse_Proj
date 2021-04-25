@@ -1,5 +1,4 @@
 import socket
-from string import maketrans
 import base64
 
 ip = '127.0.0.1'
@@ -7,16 +6,7 @@ port = 12345
 
 commands = ['exit', 'getUser', 'getOS', 'getMAC', 'getIP', 'getProc', 'download', 'upload']
 
-#Base64 decode data
-def decode_base64(data):
-    dict = "AaBbCcDdEeFfGgHhIiJjKkLlMmNnOoPpQqRrSsTtUuVvWwXxYyZz9876543210+/"
-    b64 =  "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/"
 
-    translation_tab = maketrans(dict, b64)
-    result = data.translate(translation_tab)
-
-    result += '='
-    return base64.decodestring(result)
 
 #XOR encode data
 def xor_encode(data):
@@ -36,7 +26,7 @@ def main():
 
     while (1):
         #Get command and check if it is valid
-    	command = raw_input("Enter command: ").upper()
+    	command = input("Enter command: ").upper()
     	if command not in commands:
     		print ("Invalid Command")
     		continue
@@ -50,25 +40,28 @@ def main():
         conn.send(xor_encode(command))
 
         #Receive the file from client
-        if (command == "download"):
-            path = raw_input("Enter path: ")
+        if command == "download":
+            path = "C:/Users/mcraf/CLionProjects/Final_Reverse_Proj/download2.txt"
+            #path = input("Enter path: ")
             data = conn.recv(100000)
-            filedata = decode_base64(data)
+            filedata = data.decode()
             with open(path, 'w') as f:
                 f.write(filedata)
             continue
 
         #Send file to the client
         if (command == "upload"):
-            filename = raw_input("Enter filename: ")
+            filename = "download.txt"
+            #filename = raw_input("Enter filename: ")
             with open(filename, 'rb') as f:
                 content = f.read()
-                conn.send(xor_encode(content))
+                conn.send(content)
+                #conn.send(xor_encode(content))
             continue
 
         #Receive data from client
     	data = conn.recv(10000)
-    	print decode_base64(data)
+    	print(data.decode())
 
 #Run the main server function
 main()

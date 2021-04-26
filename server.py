@@ -26,7 +26,7 @@ def main():
 
     while (1):
         #Get command and check if it is valid
-    	command = input("Enter command: ").upper()
+    	command = input("Enter command: ")
     	if command not in commands:
     		print ("Invalid Command")
     		continue

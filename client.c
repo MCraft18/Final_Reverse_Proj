@@ -122,7 +122,7 @@ int main(){
 
     // Server structure
     server.sin_family = AF_INET;
-    server.sin_addr.s_addr = inet_addr("127.0.0.1");
+    server.sin_addr.s_addr = inet_addr("192.168.159.129");
     server.sin_port = htons(12345);
 
     // Connecting to server

